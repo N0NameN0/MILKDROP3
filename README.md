@@ -1,5 +1,11 @@
 # MilkDrop 3 · Web
 
+<p align="center">
+  <a href="https://n0namen0.github.io/MILKDROP3/">
+    <img alt="Open the live demo" src="https://img.shields.io/badge/LIVE_DEMO-Open%20the%20visualizer-ff47e0?style=for-the-badge&logo=github&logoColor=white">
+  </a>
+</p>
+
 <p>
   <img alt="HTML5" src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white">
   <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black">
@@ -13,6 +19,15 @@ A browser port of **MilkDrop 3**, the legendary Winamp audio visualizer.
 Ported by **Antoine Santo aka [N0NameN0](https://github.com/N0NameN0)**.
 
 ![MilkDrop 3 Web](assets/screenshots/hero.jpg)
+
+## Live demo
+
+**[Open MilkDrop 3 Web →](https://n0namen0.github.io/MILKDROP3/)**
+
+The demo is deployed automatically from `main` with GitHub Actions to GitHub Pages.
+The published site contains the app, the bundled WebAssembly engine, the preset
+manifest and the 10,271 presets. Textures are already embedded in the WASM data file,
+so the site stays lighter than the repository.
 
 ## Run it locally
 
