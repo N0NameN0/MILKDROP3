@@ -16,7 +16,7 @@ in `tools/`.
 | MilkDrop 3 presets | pack shipped with MilkDrop 3 | community works, credited to their authors |
 | Cream of the Crop presets | `LICENSES/cream-of-the-crop-LICENSE.md` | community works / public domain in practice |
 | MilkDrop texture pack | `LICENSES/texture-pack-README.md` | community pack, credited to their authors |
-| "Neon Pulse" track | generated for this project | CC0 |
+| Demo playlist (AI 2026) | `assets/demo/` | © Antoine Santo; included with the project |
 
 ## projectM
 
@@ -42,6 +42,9 @@ invites any author who wants their work removed to contact the projectM team.
 
 The texture pack gathers the original MilkDrop textures and community textures
 used by many presets. Thanks to the authors and maintainers of these collections.
+
+The **AI 2026** demo playlist in `assets/demo/` is by Antoine Santo and is included
+in this repository as the bundled demo music.
 
 MilkDrop was created by Ryan Geiss / Nullsoft. MilkDrop 3 is developed by
 MilkDrop2077, based on BeatDrop by Maxim Volskiy. This project is an unofficial

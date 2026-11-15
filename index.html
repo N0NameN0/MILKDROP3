@@ -8,9 +8,9 @@
   <meta name="description" content="MilkDrop 3 Web — a MilkDrop audio visualizer for the browser. .milk presets, shaders, audio reactivity, fullscreen. projectM engine compiled to WebAssembly.">
   <title>MilkDrop 3 · Web</title>
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
-  <link rel="manifest" href="manifest.webmanifest?v=20261115">
-  <link rel="stylesheet" href="css/app.css?v=20261115">
-  <script src="assets/wasm/milkdrop.js?v=20261115"></script>
+  <link rel="manifest" href="manifest.webmanifest?v=20261116">
+  <link rel="stylesheet" href="css/app.css?v=20261116">
+  <script src="assets/wasm/milkdrop.js?v=20261116"></script>
 </head>
 <body>
   <svg class="svg-sprite" aria-hidden="true" focusable="false">
@@ -107,11 +107,14 @@
 
   <div class="source-menu" id="sourceMenu" hidden>
     <div class="source-menu-head">Audio source</div>
-    <button data-source="demo" id="srcDemo"><span class="src-ic"><svg class="icon"><use href="#i-music"></use></svg></span><span><b>Sound demo</b><small>Neon Pulse · generated track</small></span><span class="src-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
+    <button data-source="demo" id="srcDemo"><span class="src-ic"><svg class="icon"><use href="#i-music"></use></svg></span><span><b>Demo playlist</b><small>5 tracks · AI 2026</small></span><span class="src-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
     <button data-source="file" id="srcFile"><span class="src-ic"><svg class="icon"><use href="#i-folder"></use></svg></span><span><b>Audio file</b><small>MP3, WAV, OGG, FLAC, M4A…</small></span><span class="src-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
     <button data-source="mic" id="srcMic"><span class="src-ic"><svg class="icon"><use href="#i-mic"></use></svg></span><span><b>Microphone</b><small>Live audio input</small></span><span class="src-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
     <div class="source-menu-sep"></div>
     <button data-source="synth" id="srcSynth"><span class="src-ic"><svg class="icon"><use href="#i-wave"></use></svg></span><span><b>Synthetic demo</b><small>Visual only, no sound</small></span><span class="src-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
+    <div class="source-menu-sep"></div>
+    <div class="source-menu-subhead">Demo playlist <span>Antoine Santo · AI 2026</span></div>
+    <div class="demo-track-list" id="demoTrackList"></div>
   </div>
 
   <footer class="hud dock" id="dock">
@@ -135,7 +138,7 @@
     <button class="track" id="trackButton" title="Choose an audio source">
       <div class="track-top">
         <span class="source-pill" id="sourcePill"><svg class="icon"><use href="#i-wave"></use></svg><span id="sourceName">SYNTHETIC DEMO</span></span>
-        <span class="track-name" id="trackName">Neon Pulse — visual only</span>
+        <span class="track-name" id="trackName">Synthetic visual — no sound</span>
         <span class="track-time" id="trackTime">--:--</span>
       </div>
       <div class="track-bottom">
@@ -335,7 +338,7 @@
             <div class="range-wrap"><svg class="icon"><use href="#i-volume"></use></svg><input type="range" min="0" max="1" step="0.01" value="0.8" data-setting="volume" aria-label="Volume"><output>80%</output></div>
           </div>
           <div class="setting-actions">
-            <button class="btn ghost" id="btnDemoFromSettings"><svg class="icon"><use href="#i-music"></use></svg> Launch sound demo</button>
+            <button class="btn ghost" id="btnDemoFromSettings"><svg class="icon"><use href="#i-music"></use></svg> Play demo playlist</button>
             <button class="btn ghost" id="btnFileFromSettings"><svg class="icon"><use href="#i-folder"></use></svg> Open a file</button>
             <button class="btn ghost" id="btnMicFromSettings"><svg class="icon"><use href="#i-mic"></use></svg> Microphone</button>
           </div>
@@ -394,7 +397,7 @@
           <dl>
             <div><dt><kbd>O</kbd></dt><dd>Open an audio file</dd></div>
             <div><dt><kbd>M</kbd></dt><dd>Toggle microphone</dd></div>
-            <div><dt><kbd>D</kbd></dt><dd>Launch sound demo</dd></div>
+            <div><dt><kbd>D</kbd></dt><dd>Play demo playlist</dd></div>
             <div><dt><kbd>P</kbd></dt><dd>Play / pause</dd></div>
           </dl>
         </section>
@@ -461,6 +464,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/main.js?v=20261115"></script>
+  <script type="module" src="js/main.js?v=20261116"></script>
 </body>
 </html>

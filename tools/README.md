@@ -60,14 +60,3 @@ The manifest format consumed by `js/library.js`:
   ]
 }
 ```
-
-## `make-demo.py`
-
-Synthesizes the "Neon Pulse" demo track and encodes it to MP3:
-
-```bash
-python3 tools/make-demo.py
-```
-
-Requirements: Python 3, NumPy, ffmpeg. The track is generated at 44.1 kHz, 122 BPM,
-24 bars, and released under CC0.

@@ -1,11 +1,25 @@
 import { clamp } from './util.js';
-import { DemoSynth, renderDemoBuffer } from './synth.js';
+import { DemoSynth } from './synth.js';
 
 const OUT_RATE = 44100;
 const MAX_CHUNK = 8192;
 
 /**
- * Owns the Web Audio graph, the demo track, microphone capture and the
+ * The five-track demo playlist from the project author, used instead of a
+ * generated placeholder track. Keep the order stable: it is also the order
+ * shown in the audio-source menu.
+ */
+export const DEMO_TRACKS = Object.freeze([
+  { file: 'assets/demo/01-electrolysium-2.mp3', title: 'Electrolysium 2', artist: 'Antoine Santo', album: 'AI 2026', duration: 126.864 },
+  { file: 'assets/demo/02-electrolysium.mp3', title: 'Electrolysium', artist: 'Antoine Santo', album: 'AI 2026', duration: 89.664 },
+  { file: 'assets/demo/03-electronigma.mp3', title: 'Electronigma', artist: 'Antoine Santo', album: 'AI 2026', duration: 128.544 },
+  { file: 'assets/demo/04-state-of-electro-2.mp3', title: 'State of Electro 2', artist: 'Antoine Santo', album: 'AI 2026', duration: 111.072 },
+  { file: 'assets/demo/05-state-of-electro.mp3', title: 'State of Electro', artist: 'Antoine Santo', album: 'AI 2026', duration: 138.912 },
+]);
+
+
+/**
+ * Owns the Web Audio graph, the demo playlist, microphone capture and the
  * 44.1 kHz PCM stream that feeds the MilkDrop engine.
  */
 export class AudioEngine extends EventTarget {
@@ -22,9 +36,12 @@ export class AudioEngine extends EventTarget {
     this.mode = 'synth';
     this.playing = false;
     this.buffer = null;
-    this.track = { name: 'Neon Pulse — visual only', kind: 'synth', duration: 0 };
-    this.demoBuffer = null;
-    this.demoArrayPromise = null;
+    this.track = { name: 'Synthetic visual — no sound', kind: 'synth', duration: 0 };
+    this.demoTracks = DEMO_TRACKS;
+    this.demoIndex = 0;
+    this.demoBuffers = new Map();
+    this.demoArrayPromises = new Map();
+    this.demoRequest = 0;
     this.micStream = null;
     this.micNode = null;
     this.micProcessor = null;
@@ -60,15 +77,28 @@ export class AudioEngine extends EventTarget {
     return this.mode === 'demo' || this.mode === 'file';
   }
 
+  prefetchDemoTrack(index = this.demoIndex) {
+    const track = this.demoTracks[index];
+    if (!track) return Promise.reject(new Error('Demo track not found.'));
+    if (!this.demoArrayPromises.has(index)) {
+      const promise = fetch(track.file, { cache: 'force-cache' })
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.arrayBuffer();
+        })
+        .catch((error) => {
+          this.demoArrayPromises.delete(index);
+          throw error;
+        });
+      this.demoArrayPromises.set(index, promise);
+    }
+    return this.demoArrayPromises.get(index);
+  }
+
   startDemoPrefetch() {
-    if (this.demoArrayPromise) return this.demoArrayPromise;
-    this.demoArrayPromise = fetch('assets/demo/neon-pulse.mp3')
-      .then((response) => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.arrayBuffer();
-      })
-      .catch(() => null);
-    return this.demoArrayPromise;
+    // Only the first track is fetched on boot; the rest are fetched on demand
+    // (and the next track is prefetched when a demo starts).
+    return this.prefetchDemoTrack(this.demoIndex).catch(() => null);
   }
 
   async ensureContext() {
@@ -138,19 +168,21 @@ export class AudioEngine extends EventTarget {
     this._stopSource();
 
     const duration = this.buffer.duration || 1;
-    const offset = this.mode === 'demo'
-      ? ((offsetSeconds % duration) + duration) % duration
-      : clamp(offsetSeconds, 0, Math.max(0, duration - 0.02));
+    const offset = clamp(offsetSeconds, 0, Math.max(0, duration - 0.02));
 
     const source = ctx.createBufferSource();
     source.buffer = this.buffer;
-    source.loop = this.mode === 'demo';
+    source.loop = false;
     source.connect(this.master);
 
     const token = this.sourceToken;
     source.onended = () => {
-      if (token !== this.sourceToken) return;
-      if (this.mode === 'file' && this.source === source) {
+      if (token !== this.sourceToken || this.source !== source) return;
+      if (this.mode === 'demo' && this.playing) {
+        this._advanceDemo();
+        return;
+      }
+      if (this.mode === 'file' && this.playing) {
         this.playing = false;
         this.pauseOffset = duration;
         this.vizPos = duration;
@@ -177,14 +209,7 @@ export class AudioEngine extends EventTarget {
       return this.pauseOffset || 0;
     }
     const duration = this.buffer?.duration || 0;
-    let pos = this.sourceOffset + (this.ctx.currentTime - this.sourceStartCtx);
-    if (this.mode === 'demo' && duration > 0) {
-      pos %= duration;
-      if (pos < 0) pos += duration;
-    } else {
-      pos = clamp(pos, 0, duration);
-    }
-    return pos;
+    return clamp(this.sourceOffset + (this.ctx.currentTime - this.sourceStartCtx), 0, duration);
   }
 
   getProgress() {
@@ -192,54 +217,90 @@ export class AudioEngine extends EventTarget {
     return clamp(this.currentPosition() / this.buffer.duration, 0, 1);
   }
 
-  async loadDemoBuffer() {
-    if (this.demoBuffer) return this.demoBuffer;
+  async loadDemoBuffer(index = this.demoIndex) {
+    if (this.demoBuffers.has(index)) return this.demoBuffers.get(index);
     const ctx = await this.ensureContext();
-    await this.startDemoPrefetch();
-    let arrayBuffer = null;
-    try {
-      arrayBuffer = await this.demoArrayPromise;
-    } catch {
-      arrayBuffer = null;
-    }
-    if (arrayBuffer) {
-      try {
-        this.demoBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
-      } catch {
-        this.demoBuffer = null;
+    const arrayBuffer = await this.prefetchDemoTrack(index);
+    const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+    if (!buffer || !buffer.duration) throw new Error('Unreadable demo track.');
+    this.demoBuffers.set(index, buffer);
+    // Keep at most two decoded tracks in memory; raw MP3 data stays cached.
+    if (this.demoBuffers.size > 2) {
+      for (const key of [...this.demoBuffers.keys()]) {
+        if (key !== index) {
+          this.demoBuffers.delete(key);
+          break;
+        }
       }
     }
-    if (!this.demoBuffer) {
-      // The bundled MP3 is missing or cannot be decoded: synthesize a loop.
-      this.demoBuffer = renderDemoBuffer(ctx, 24);
-    }
-    return this.demoBuffer;
+    return buffer;
   }
 
-  async playDemo() {
+  _advanceDemo() {
+    if (this.mode !== 'demo' || !this.playing || !this.demoTracks.length) return;
+    const next = (this.demoIndex + 1) % this.demoTracks.length;
+    this.playDemo(next).catch((error) => {
+      console.error('[milkdrop] demo track', error);
+      this.mode = 'synth';
+      this.playing = false;
+      this.buffer = null;
+      this.track = { name: 'Synthetic visual — no sound', kind: 'synth', duration: 0 };
+      this.emitTrack();
+      this.emitState();
+    });
+  }
+
+  async playDemo(trackIndex = null) {
+    const count = this.demoTracks.length;
+    if (!count) throw new Error('No demo tracks available.');
+    const index = Number.isInteger(trackIndex)
+      ? ((trackIndex % count) + count) % count
+      : this.demoIndex;
+    const request = ++this.demoRequest;
     const ctx = await this.ensureContext();
     this._stopMic(true);
     this._stopSource();
-    const buffer = await this.loadDemoBuffer();
+
+    let buffer;
+    try {
+      buffer = await this.loadDemoBuffer(index);
+    } catch (error) {
+      if (request === this.demoRequest) {
+        this.mode = 'synth';
+        this.playing = false;
+        this.buffer = null;
+        this.track = { name: 'Synthetic visual — no sound', kind: 'synth', duration: 0 };
+        this.emitTrack();
+        this.emitState();
+      }
+      throw error;
+    }
+    if (request !== this.demoRequest) return false;
+
+    const meta = this.demoTracks[index];
+    this.demoIndex = index;
     this.buffer = buffer;
     this.mode = 'demo';
     this.playing = true;
     this.pauseOffset = 0;
     this.track = {
-      name: 'Neon Pulse',
-      subtitle: 'Sound demo · generated track',
+      name: meta.title,
+      subtitle: `${meta.artist} · ${meta.album}`,
       kind: 'demo',
       duration: buffer.duration,
+      index,
     };
     this.emitTrack();
     this._startBuffer(0);
     this.emitState();
+    this.prefetchDemoTrack((index + 1) % count).catch(() => {});
     if (ctx.state === 'suspended') await ctx.resume();
     return true;
   }
 
   async openFile(file) {
     if (!file) return false;
+    this.demoRequest += 1;
     if (!this.ctx) await this.ensureContext();
     const arrayBuffer = await file.arrayBuffer();
     const buffer = await this.ctx.decodeAudioData(arrayBuffer);
@@ -278,6 +339,7 @@ export class AudioEngine extends EventTarget {
       },
       video: false,
     });
+    this.demoRequest += 1;
     this._stopSource();
     this._stopMic(true);
     this.playing = false;
@@ -320,7 +382,7 @@ export class AudioEngine extends EventTarget {
     if (!silent) {
       this.mode = 'synth';
       this.playing = false;
-      this.track = { name: 'Neon Pulse — visual only', kind: 'synth', duration: 0 };
+      this.track = { name: 'Synthetic visual — no sound', kind: 'synth', duration: 0 };
       this.emitTrack();
       this.emitState();
     }
@@ -347,6 +409,7 @@ export class AudioEngine extends EventTarget {
   }
 
   useSynthOnly() {
+    this.demoRequest += 1;
     this._stopSource();
     this._stopMic(true);
     this.mode = 'synth';
@@ -354,7 +417,7 @@ export class AudioEngine extends EventTarget {
     this.buffer = null;
     this.pauseOffset = 0;
     this.vizPos = 0;
-    this.track = { name: 'Neon Pulse — visual only', kind: 'synth', duration: 0 };
+    this.track = { name: 'Synthetic visual — no sound', kind: 'synth', duration: 0 };
     this.emitTrack();
     this.emitState();
   }
@@ -479,49 +542,30 @@ export class AudioEngine extends EventTarget {
     const left = buffer.getChannelData(0);
     const right = channels > 1 ? buffer.getChannelData(1) : left;
     const step = rate / OUT_RATE;
-    const loop = this.mode === 'demo';
 
     // Keep the visual cursor close to the real audio clock.
     const actual = this.currentPosition();
-    if (!loop) {
-      if (Math.abs(this.vizPos - actual) > 0.18) this.vizPos = actual;
-    } else if (duration > 0) {
-      const diff = Math.abs(this.vizPos - actual);
-      if (diff > 0.25 && diff < duration - 0.25) this.vizPos = actual;
-    }
+    if (Math.abs(this.vizPos - actual) > 0.18) this.vizPos = actual;
 
     let pos = this.vizPos * rate;
     const length = left.length;
     for (let i = 0; i < count; i++) {
-      let index = Math.floor(pos);
+      const index = Math.floor(pos);
       const frac = pos - index;
-      if (loop) {
-        index = ((index % length) + length) % length;
-        const next = (index + 1) % length;
+      if (index >= length) {
+        target[i] = 0;
+      } else {
+        const next = Math.min(index + 1, length - 1);
         target[i] = left[index] * (1 - frac) + left[next] * frac;
         if (channels > 1) {
           const r = right[index] * (1 - frac) + right[next] * frac;
           target[i] = target[i] * 0.72 + r * 0.28;
         }
-      } else {
-        if (index >= length) {
-          target[i] = 0;
-        } else {
-          const next = Math.min(index + 1, length - 1);
-          target[i] = left[index] * (1 - frac) + left[next] * frac;
-          if (channels > 1) {
-            const r = right[index] * (1 - frac) + right[next] * frac;
-            target[i] = target[i] * 0.72 + r * 0.28;
-          }
-        }
       }
       pos += step;
     }
     this.vizPos += count / OUT_RATE;
-    if (loop && duration > 0 && this.vizPos >= duration) {
-      this.vizPos %= duration;
-    }
-    if (!loop && this.vizPos > duration) this.vizPos = duration;
+    if (this.vizPos > duration) this.vizPos = duration;
     return target.subarray(0, count);
   }
 

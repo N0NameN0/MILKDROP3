@@ -189,32 +189,3 @@ export class DemoSynth {
     return saturated * fade;
   }
 }
-
-/**
- * Builds a stereo AudioBuffer from the same synth, used as a fallback when
- * the bundled demo track cannot be decoded.
- */
-export function renderDemoBuffer(context, seconds = 24) {
-  const rate = context.sampleRate;
-  const length = Math.floor(rate * seconds);
-  const buffer = context.createBuffer(2, length, rate);
-  const synth = new DemoSynth(rate);
-  const left = buffer.getChannelData(0);
-  const right = buffer.getChannelData(1);
-  const scratchL = new Float32Array(2048);
-  const scratchR = new Float32Array(2048);
-  let offset = 0;
-  while (offset < length) {
-    const n = Math.min(2048, length - offset);
-    synth.generate(scratchL, n);
-    for (let i = 0; i < n; i++) {
-      // A hint of width without breaking mono compatibility.
-      const s = scratchL[i];
-      const d = i > 0 ? scratchL[i] - scratchL[i - 1] : 0;
-      left[offset + i] = s + d * 0.12;
-      right[offset + i] = s - d * 0.12;
-    }
-    offset += n;
-  }
-  return buffer;
-}

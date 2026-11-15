@@ -110,6 +110,7 @@ const els = {
   progressFill: $('#progressFill'),
   progressGlow: $('#progressGlow'),
   sourceMenu: $('#sourceMenu'),
+  demoTrackList: $('#demoTrackList'),
   srcDemo: $('#srcDemo'),
   srcFile: $('#srcFile'),
   srcMic: $('#srcMic'),
@@ -256,6 +257,12 @@ function renderSourceMenu() {
   const activeSource = audio.isMicActive ? 'mic' : audio.mode;
   for (const node of [els.srcDemo, els.srcFile, els.srcMic, els.srcSynth]) {
     node.classList.toggle('active', node.dataset.source === activeSource);
+  }
+  if (els.demoTrackList) {
+    for (const node of els.demoTrackList.querySelectorAll('.demo-track')) {
+      const active = audio.mode === 'demo' && Number(node.dataset.demoIndex) === audio.demoIndex;
+      node.classList.toggle('active', active);
+    }
   }
 }
 
@@ -472,14 +479,32 @@ function loadByPath(path, options = {}) {
   return loadPreset(preset.i, options);
 }
 
-async function playDemoSafe() {
+async function playDemoSafe(trackIndex = null) {
   closeSourceMenu();
   try {
-    await audio.playDemo();
+    await audio.playDemo(trackIndex);
   } catch (error) {
     console.error(error);
     toast(`Playback failed: ${error.message}`, 'error', 4000);
   }
+}
+
+function buildDemoTrackList() {
+  if (!els.demoTrackList) return;
+  els.demoTrackList.innerHTML = audio.demoTracks.map((track, index) => `
+    <button class="demo-track" data-demo-index="${index}" type="button">
+      <span class="dt-num">${String(index + 1).padStart(2, '0')}</span>
+      <span class="dt-body">
+        <span class="dt-title">${escapeHtml(track.title)}</span>
+        <span class="dt-meta">${escapeHtml(track.artist)} · ${escapeHtml(track.album)}</span>
+      </span>
+      <span class="dt-duration">${formatTime(track.duration)}</span>
+    </button>`).join('');
+  els.demoTrackList.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-demo-index]');
+    if (!button) return;
+    playDemoSafe(Number(button.dataset.demoIndex));
+  });
 }
 
 function openFilePicker() {
@@ -549,7 +574,7 @@ function updateAudioUI() {
 
   const labels = {
     synth: 'SYNTHETIC DEMO',
-    demo: 'SOUND DEMO',
+    demo: 'DEMO PLAYLIST',
     file: 'AUDIO FILE',
     mic: 'MICROPHONE',
   };
@@ -778,6 +803,7 @@ function resizeCanvas() {
 }
 
 function bindUI() {
+  buildDemoTrackList();
   els.nowPreset.addEventListener('click', () => toggleModal('browser'));
   els.btnBrowser.addEventListener('click', () => toggleModal('browser'));
   els.btnSettings.addEventListener('click', () => toggleModal('settings'));
@@ -797,7 +823,7 @@ function bindUI() {
     settings.reset();
     toast('Settings reset');
   });
-  els.btnDemoFromSettings.addEventListener('click', playDemoSafe);
+  els.btnDemoFromSettings.addEventListener('click', () => playDemoSafe());
   els.btnFileFromSettings.addEventListener('click', openFilePicker);
   els.btnMicFromSettings.addEventListener('click', toggleMic);
 
@@ -821,7 +847,7 @@ function bindUI() {
   });
 
   els.trackButton.addEventListener('click', openSourceMenu);
-  els.srcDemo.addEventListener('click', playDemoSafe);
+  els.srcDemo.addEventListener('click', () => playDemoSafe());
   els.srcFile.addEventListener('click', openFilePicker);
   els.srcMic.addEventListener('click', toggleMic);
   els.srcSynth.addEventListener('click', () => {

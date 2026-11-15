@@ -88,8 +88,8 @@ approximate shader rewrite.
 - **Soft transitions** between presets and a configurable auto-shuffle.
 - **Library** with full-text search (name, author, category), categories,
   persistent favorites, history, illustrated featured picks and a virtualized list.
-- **Audio**: local files (MP3, WAV, OGG, FLAC, M4A…), microphone, the generated
-  "Neon Pulse" sound demo (47 s), or a silent synthetic visual demo on first load.
+- **Audio**: local files (MP3, WAV, OGG, FLAC, M4A…), microphone, a **5-track demo
+  playlist** by Antoine Santo (*AI 2026*), or a silent synthetic visual demo on first load.
 - **Audio-reactive visuals**: engine FFT/beat analysis, dock equalizer and an
   optional change-on-beat mode.
 - **Fullscreen** with automatic UI hiding, **PNG capture**, drag & drop audio or
@@ -97,6 +97,23 @@ approximate shader rewrite.
 - **Responsive** desktop / tablet / mobile interface, keyboard shortcuts and basic
   accessibility.
 - A dark neon theme inspired by MilkDrop 3's visual identity.
+
+## Demo playlist
+
+The built-in audio source is a five-track playlist by **Antoine Santo**, album
+*AI 2026*:
+
+1. Electrolysium 2
+2. Electrolysium
+3. Electronigma
+4. State of Electro 2
+5. State of Electro
+
+Tracks play in order, auto-advance at the end, and can be selected directly from
+the audio-source menu. A silent procedural feed remains available for visual-only
+demos.
+
+![Demo playlist menu](assets/screenshots/demo-playlist.jpg)
 
 ## Controls
 
@@ -111,7 +128,7 @@ approximate shader rewrite.
 | Fullscreen | `F` |
 | Open an audio file | `O` |
 | Microphone | `M` |
-| Sound demo | `D` |
+| Demo playlist | `D` |
 | Play / pause | `P` |
 | Capture PNG | `C` |
 | Help | `H` |
@@ -130,13 +147,13 @@ css/app.css                 Design system, HUD, responsive layout
 js/main.js                  Orchestration, navigation, shortcuts, auto-shuffle
 js/engine.js                JS ↔ WebAssembly bridge (projectM)
 js/audio.js                 Web Audio, files, microphone, 44.1 kHz PCM
-js/synth.js                 Procedural synthetic demo + fallback buffer
+js/synth.js                 Procedural synthetic visual-only audio feed
 js/milk2.js                 MilkDrop 3 double-preset (.milk2) reader
 js/library.js               Manifest, search, favorites, history
 js/browser.js               Virtualized library and featured picks
 js/settings.js              Persistent preferences
 assets/wasm/                Compiled projectM engine (milkdrop.js/.wasm/.data)
-assets/demo/neon-pulse.mp3  Generated sound demo
+assets/demo/                 5-track demo playlist (AI 2026)
 assets/previews/            Featured-pick thumbnails
 presets/                    10,271 .milk / .milk2 presets
 textures/                   MilkDrop texture pack (also embedded in the WASM)
@@ -192,15 +209,6 @@ node tools/gen-manifest.mjs
 The script scans `presets/`, extracts the author/title convention
 `author - title`, computes categories and rewrites `manifest.json`.
 
-### Regenerating the sound demo
-
-```bash
-python3 tools/make-demo.py
-```
-
-Requires Python 3, NumPy and ffmpeg. The track is entirely synthesized
-(kick, bass, pads, arpeggios) and released under CC0.
-
 ## Known limitations
 
 - `.milk2` double presets are rendered by **two projectM instances** and
@@ -235,7 +243,7 @@ Requires Python 3, NumPy and ffmpeg. The track is entirely synthesized
   Presets are the work of the MilkDrop community.
 - **MilkDrop texture pack** —
   [presets-milkdrop-texture-pack](https://github.com/projectM-visualizer/presets-milkdrop-texture-pack).
-- **Neon Pulse** — demo track generated for this project (CC0).
+- **Demo playlist** — Antoine Santo, *AI 2026* (5 tracks, included in `assets/demo/`).
 - **Web interface and integration** — MilkDrop 3 Web, code under the MIT license.
 
 See [LICENSES/](LICENSES/) for the full texts.
@@ -248,7 +256,7 @@ Checks performed during development:
 - dozens of presets rendered through headless captures, including the MilkDrop 3
   category;
 - `.milk2` double preset loading, two-engine composition and blended PNG capture;
-- sound demo play/pause/resume and WAV file playback;
+- demo playlist track selection, play/pause/resume and WAV file playback;
 - search, categories, favorites, history, deep links;
 - modals open/close, settings, fullscreen, PNG capture;
 - microphone denial without breaking current playback;

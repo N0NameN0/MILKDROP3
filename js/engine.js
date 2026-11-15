@@ -38,7 +38,7 @@ export class MilkDropEngine {
     }
 
     const base = new URL('assets/wasm/', document.baseURI).href;
-    const assetVersion = '20261115';
+    const assetVersion = '20261116';
     const module = await window.MilkDropWasm({
       locateFile: (file) => `${base}${file}?v=${assetVersion}`,
       print: (text) => this.onLog('log', text),
