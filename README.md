@@ -18,11 +18,13 @@
 A browser port of **MilkDrop 3**, the legendary Winamp audio visualizer.
 Ported by **Antoine Santo aka [N0NameN0](https://github.com/N0NameN0)**.
 
-![MilkDrop 3 Web](assets/screenshots/hero.jpg)
+![MilkDrop 3 Web title screen](assets/screenshots/intro.jpg)
 
 ## Live demo
 
 **[Open MilkDrop 3 Web →](https://n0namen0.github.io/MILKDROP3/)**
+
+Click **GO** on the title screen to start the demo playlist and enter fullscreen.
 
 The demo is deployed automatically from `main` with GitHub Actions to GitHub Pages.
 The published site contains the app, the bundled WebAssembly engine, the preset
@@ -89,7 +91,8 @@ approximate shader rewrite.
 - **Library** with full-text search (name, author, category), categories,
   persistent favorites, history, illustrated featured picks and a virtualized list.
 - **Audio**: local files (MP3, WAV, OGG, FLAC, M4A…), microphone, a **5-track demo
-  playlist** by Antoine Santo (*AI 2026*), or a silent synthetic visual demo on first load.
+  playlist** by Antoine Santo (*AI 2026*) started by the **GO** title screen, or a
+  silent synthetic visual demo.
 - **Audio-reactive visuals**: engine FFT/beat analysis, dock equalizer and an
   optional change-on-beat mode.
 - **Fullscreen** with automatic UI hiding, **PNG capture**, drag & drop audio or
@@ -109,9 +112,10 @@ The built-in audio source is a five-track playlist by **Antoine Santo**, album
 4. State of Electro 2
 5. State of Electro
 
-Tracks play in order, auto-advance at the end, and can be selected directly from
-the audio-source menu. A silent procedural feed remains available for visual-only
-demos.
+The playlist is the default audio source. The **ARE YOU READY??** title screen starts
+it with **GO**, which also requests fullscreen from the user gesture. Tracks play in
+order, auto-advance at the end, and can be selected directly from the audio-source
+menu. A silent procedural feed remains available for visual-only demos.
 
 ![Demo playlist menu](assets/screenshots/demo-playlist.jpg)
 
@@ -256,7 +260,8 @@ Checks performed during development:
 - dozens of presets rendered through headless captures, including the MilkDrop 3
   category;
 - `.milk2` double preset loading, two-engine composition and blended PNG capture;
-- demo playlist track selection, play/pause/resume and WAV file playback;
+- title-screen GO flow (demo playlist + fullscreen), track selection, play/pause/resume
+  and WAV file playback;
 - search, categories, favorites, history, deep links;
 - modals open/close, settings, fullscreen, PNG capture;
 - microphone denial without breaking current playback;

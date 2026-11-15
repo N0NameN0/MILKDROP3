@@ -34,6 +34,7 @@ const state = {
   displayFps: 0,
   wasmFps: 60,
   booted: false,
+  introStarted: false,
   dual: false,
   secondaryLoading: null,
   doubleInfo: null,
@@ -130,6 +131,8 @@ const els = {
   bootStatus,
   bootError,
   bootErrorText,
+  intro: $('#intro'),
+  btnGo: $('#btnGo'),
   settingsLayer: $('#settingsLayer'),
   helpLayer: $('#helpLayer'),
   aboutLayer: $('#aboutLayer'),
@@ -507,6 +510,41 @@ function buildDemoTrackList() {
   });
 }
 
+
+async function startExperience() {
+  if (state.introStarted) return;
+  state.introStarted = true;
+  if (els.btnGo) els.btnGo.disabled = true;
+
+  // Both calls must start inside the click handler so the browser keeps the
+  // user activation for fullscreen and Web Audio.
+  let fullscreenPromise = Promise.resolve();
+  try {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      fullscreenPromise = document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+    }
+  } catch {
+    /* fullscreen can be unavailable or blocked */
+  }
+
+  const demoPromise = audio.playDemo(audio.demoIndex).catch((error) => {
+    console.error('[milkdrop] intro demo', error);
+    toast(`Could not start the demo playlist: ${error.message}`, 'error', 5000);
+    return false;
+  });
+
+  els.intro.classList.add('leaving');
+  window.setTimeout(() => {
+    els.intro.hidden = true;
+    document.body.classList.remove('intro-active');
+    els.btnGo?.blur();
+    resetShuffleTimer();
+    scheduleHudHide();
+  }, 620);
+
+  await Promise.allSettled([fullscreenPromise, demoPromise]);
+}
+
 function openFilePicker() {
   closeSourceMenu();
   els.fileInput.click();
@@ -804,6 +842,10 @@ function resizeCanvas() {
 
 function bindUI() {
   buildDemoTrackList();
+  els.btnGo?.addEventListener('click', (event) => {
+    event.preventDefault();
+    startExperience();
+  });
   els.nowPreset.addEventListener('click', () => toggleModal('browser'));
   els.btnBrowser.addEventListener('click', () => toggleModal('browser'));
   els.btnSettings.addEventListener('click', () => toggleModal('settings'));
@@ -1046,6 +1088,13 @@ async function loadPresetFile(file) {
 
 function onKeyDown(event) {
   if (event.defaultPrevented) return;
+  if (document.body.classList.contains('intro-active')) {
+    if (event.code === 'Enter' || event.code === 'Space') {
+      event.preventDefault();
+      startExperience();
+    }
+    return;
+  }
   if (event.key === 'Escape') {
     if (!els.sourceMenu.hidden) {
       closeSourceMenu();
@@ -1204,7 +1253,7 @@ function startLoop() {
     }
 
     // Auto-shuffle countdown.
-    if (settings.get('shuffle') && !state.locked && !state.loading && !anyModalOpen() && !document.hidden) {
+    if (settings.get('shuffle') && !state.locked && !state.loading && !anyModalOpen() && !document.hidden && !document.body.classList.contains('intro-active')) {
       state.shuffleRemaining -= dt;
       if (state.shuffleRemaining <= 0) {
         resetShuffleTimer();
@@ -1338,11 +1387,11 @@ async function init() {
     boot.classList.add('done');
     document.body.classList.remove('booting');
     window.setTimeout(() => { boot.hidden = true; }, 900);
-    if (!localStorage.getItem('md3web.visited.v1')) {
-      localStorage.setItem('md3web.visited.v1', '1');
-      toast('Welcome to MilkDrop 3 Web · Press Space to change preset', 'info', 5200);
-    } else {
-      toast('Drop an audio file or click Play for the sound demo', 'info', 3200);
+    if (els.intro) {
+      els.intro.hidden = false;
+      document.body.classList.add('intro-active');
+      requestAnimationFrame(() => els.intro.classList.add('visible'));
+      window.setTimeout(() => els.btnGo?.focus({ preventScroll: true }), 240);
     }
   }, 620);
 
@@ -1361,6 +1410,7 @@ async function init() {
     previousPreset,
     randomPreset,
     openBrowser: () => openModal('browser'),
+    startExperience,
     getFps: () => state.displayFps,
   };
 }
