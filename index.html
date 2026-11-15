@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#05060a">
+  <meta name="author" content="Antoine Santo (N0NameN0)">
+  <meta name="description" content="MilkDrop 3 Web — a MilkDrop audio visualizer for the browser. .milk presets, shaders, audio reactivity, fullscreen. projectM engine compiled to WebAssembly.">
+  <title>MilkDrop 3 · Web</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest?v=20261115">
+  <link rel="stylesheet" href="css/app.css?v=20261115">
+  <script src="assets/wasm/milkdrop.js?v=20261115"></script>
+</head>
+<body>
+  <svg class="svg-sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.53.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M19 4.8v14.4a1 1 0 0 1-1.55.84L9 14.4V19a1 1 0 0 1-2 0V5a1 1 0 0 1 2 0v4.6l8.45-5.64A1 1 0 0 1 19 4.8Z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M5 4.8v14.4a1 1 0 0 0 1.55.84L15 14.4V19a1 1 0 0 0 2 0V5a1 1 0 0 0-2 0v4.6L6.55 3.96A1 1 0 0 0 5 4.8Z"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 7h3.2c4.6 0 5.7 10 10.6 10H21M16.5 3.5 21 7l-4.5 3.5M3 17h3.2c1.5 0 2.7-1.1 3.8-2.6M16.5 13.5 21 17l-4.5 3.5M14 8.9c.7-.5 1.5-.9 2.8-.9H21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="1.35"/><circle cx="15.6" cy="8.4" r="1.35"/><circle cx="12" cy="12" r="1.35"/><circle cx="8.4" cy="15.6" r="1.35"/><circle cx="15.6" cy="15.6" r="1.35"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="15.5" r="1.2"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7a4 4 0 0 1 7.6-1.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.2"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.2 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3.2Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-star-fill" viewBox="0 0 24 24"><path d="m12 3.2 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3.2Z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 13.5a7.8 7.8 0 0 0 .05-3l1.7-1.3-2-3.4-2 .8a7.9 7.9 0 0 0-2.6-1.5L14.2 2h-4.4l-.35 2.1a7.9 7.9 0 0 0-2.6 1.5l-2-.8-2 3.4 1.7 1.3a7.8 7.8 0 0 0 0 3l-1.7 1.3 2 3.4 2-.8a7.9 7.9 0 0 0 2.6 1.5l.35 2.1h4.4l.35-2.1a7.9 7.9 0 0 0 2.6-1.5l2 .8 2-3.4-1.7-1.3Z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+    <symbol id="i-shrink" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.7" cy="10.7" r="6.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 6.8A2.3 2.3 0 0 1 5.8 4.5h4.1l2 2.4h6.3a2.3 2.3 0 0 1 2.3 2.3v8.5a2.3 2.3 0 0 1-2.3 2.3H5.8a2.3 2.3 0 0 1-2.3-2.3V6.8Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.8" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.8 11.5a6.2 6.2 0 0 0 12.4 0M12 17.8V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.4 9.1a2.7 2.7 0 1 1 4.3 2.3c-.9.7-1.7 1.2-1.7 2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.05"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 9.5v5h3.2l4.3 3.7V5.8L7.2 9.5H4Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14.5 9a4.2 4.2 0 0 1 0 6M17 6.7a7.4 7.4 0 0 1 0 10.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v11m0 0 4-4m-4 4-4-4M4 17v2.2A1.8 1.8 0 0 0 5.8 21h12.4a1.8 1.8 0 0 0 1.8-1.8V17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M4 5.5V10h4.5M4.6 9.3A8.5 8.5 0 1 1 4 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12h2l1.5-5 2.4 11L10.5 6l2.3 12L15.2 9l1.8 6 1.6-3H22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M6.5 10h1M10 10h1M13.5 10h1M17 10h.5M6.5 13.5h1M10 13.5h1M13.5 13.5h1M17 13.5h.5M8 17h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-about" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.5V17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="7.4" r="1.1"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8.5h3l1.5-2h7l1.5 2h3A1.5 1.5 0 0 1 21.5 10v8A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18v-8A1.5 1.5 0 0 1 4 8.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 2.5 13.7 9l6.3 1.8-6.3 1.7L12 19l-1.7-6.5L4 10.8 10.3 9 12 2.5ZM19 15l.8 2.7 2.7.8-2.7.8L19 22l-.8-2.7-2.7-.8 2.7-.8L19 15Z" fill="currentColor"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5.5L20 3v12.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.7" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="17.5" cy="15.5" r="2.7" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5 10-11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M20 12H4m0 0 6-6m-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <main id="stage">
+    <canvas id="md-canvas" aria-label="MilkDrop visualizer"></canvas>
+    <canvas id="md-canvas-b" aria-hidden="true"></canvas>
+    <div class="stage-vignette"></div>
+    <div class="stage-grain"></div>
+    <div class="stage-scan"></div>
+  </main>
+
+  <header class="hud topbar" id="topbar">
+    <div class="brand" aria-label="MilkDrop 3 Web">
+      <div class="brand-mark" id="brandMark">
+        <svg viewBox="0 0 44 44" aria-hidden="true">
+          <circle class="bm-ring" cx="22" cy="22" r="19"></circle>
+          <path class="bm-wave" d="M8 24c3.2 0 3.2-8 6.4-8s3.2 13 6.4 13 3.2-16 6.4-16 3.2 11 6.4 11 3.2-5 4.4-5"></path>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">MILKDROP <em>3</em><span class="brand-web">WEB</span></span>
+        <span class="brand-sub"><span class="live-dot"></span> MUSIC VISUALIZER</span>
+      </div>
+    </div>
+
+    <button class="now-preset" id="nowPreset" title="Open the preset library (B)">
+      <span class="np-kicker"><span id="npCategory">Library</span><span class="np-sep">/</span><span id="npNumber">—</span></span>
+      <span class="np-title" id="npTitle">Initializing…</span>
+    </button>
+
+    <div class="top-actions">
+      <div class="stat-chip" id="fpsChip" title="Frames per second">
+        <span class="fps-dot"></span>
+        <span class="fps-value" id="fpsValue">–</span>
+        <span class="fps-unit">FPS</span>
+      </div>
+      <button class="icon-btn" id="btnBrowser" aria-label="Preset library" title="Preset library (B)">
+        <svg class="icon"><use href="#i-grid"></use></svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" aria-label="Settings" title="Settings">
+        <svg class="icon"><use href="#i-gear"></use></svg>
+      </button>
+      <button class="icon-btn" id="btnFullscreen" aria-label="Fullscreen" title="Fullscreen (F)">
+        <svg class="icon"><use href="#i-expand"></use></svg>
+      </button>
+    </div>
+  </header>
+
+  <button class="edge-nav prev hud" id="btnEdgePrev" aria-label="Previous preset" title="Previous preset (←)">
+    <svg class="icon"><use href="#i-chevron-left"></use></svg>
+  </button>
+  <button class="edge-nav next hud" id="btnEdgeNext" aria-label="Next preset" title="Next preset (→)">
+    <svg class="icon"><use href="#i-chevron-right"></use></svg>
+  </button>
+
+  <div class="shuffle-pill hud" id="shufflePill" hidden>
+    <svg class="icon"><use href="#i-shuffle"></use></svg>
+    <span>Next preset in <b id="shuffleCountdown">45</b> s</span>
+  </div>
+
+  <div class="source-menu" id="sourceMenu" hidden>
+    <div class="source-menu-head">Audio source</div>
+    <button data-source="demo" id="srcDemo"><span class="src-ic"><svg class="icon"><use href="#i-music"></use></svg></span><span><b>Sound demo</b><small>Neon Pulse · generated track</small></span><span class="src-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
+    <button data-source="file" id="srcFile"><span class="src-ic"><svg class="icon"><use href="#i-folder"></use></svg></span><span><b>Audio file</b><small>MP3, WAV, OGG, FLAC, M4A…</small></span><span class="src-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
+    <button data-source="mic" id="srcMic"><span class="src-ic"><svg class="icon"><use href="#i-mic"></use></svg></span><span><b>Microphone</b><small>Live audio input</small></span><span class="src-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
+    <div class="source-menu-sep"></div>
+    <button data-source="synth" id="srcSynth"><span class="src-ic"><svg class="icon"><use href="#i-wave"></use></svg></span><span><b>Synthetic demo</b><small>Visual only, no sound</small></span><span class="src-check"><svg class="icon"><use href="#i-check"></use></svg></span></button>
+  </div>
+
+  <footer class="hud dock" id="dock">
+    <div class="dock-group transport">
+      <button class="round-btn" id="btnPrev" aria-label="Previous preset" title="Previous (←)">
+        <svg class="icon"><use href="#i-prev"></use></svg>
+      </button>
+      <button class="play-btn" id="btnPlay" aria-label="Play / pause" title="Play / pause">
+        <svg class="icon play-ic"><use href="#i-play"></use></svg>
+        <svg class="icon pause-ic"><use href="#i-pause"></use></svg>
+        <span class="play-halo"></span>
+      </button>
+      <button class="round-btn" id="btnNext" aria-label="Next preset" title="Next (→)">
+        <svg class="icon"><use href="#i-next"></use></svg>
+      </button>
+      <button class="round-btn" id="btnRandom" aria-label="Random preset" title="Random preset (R)">
+        <svg class="icon"><use href="#i-dice"></use></svg>
+      </button>
+    </div>
+
+    <button class="track" id="trackButton" title="Choose an audio source">
+      <div class="track-top">
+        <span class="source-pill" id="sourcePill"><svg class="icon"><use href="#i-wave"></use></svg><span id="sourceName">SYNTHETIC DEMO</span></span>
+        <span class="track-name" id="trackName">Neon Pulse — visual only</span>
+        <span class="track-time" id="trackTime">--:--</span>
+      </div>
+      <div class="track-bottom">
+        <div class="mini-eq" id="miniEq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="progress" id="progressWrap"><div class="progress-fill" id="progressFill"></div><div class="progress-glow" id="progressGlow"></div></div>
+      </div>
+    </button>
+
+    <div class="dock-group actions">
+      <button class="round-btn" id="btnFavorite" aria-label="Add to favorites" title="Favorite">
+        <svg class="icon star-off"><use href="#i-star"></use></svg>
+        <svg class="icon star-on"><use href="#i-star-fill"></use></svg>
+      </button>
+      <button class="round-btn toggle" id="btnShuffle" aria-label="Automatic preset shuffle" aria-pressed="true" title="Auto shuffle (S)">
+        <svg class="icon"><use href="#i-shuffle"></use></svg>
+      </button>
+      <button class="round-btn toggle" id="btnLock" aria-label="Lock preset" aria-pressed="false" title="Lock preset (L)">
+        <svg class="icon lock-ic"><use href="#i-unlock"></use></svg>
+      </button>
+      <span class="dock-sep"></span>
+      <button class="round-btn" id="btnOpen" aria-label="Open an audio file" title="Open an audio file (O)">
+        <svg class="icon"><use href="#i-folder"></use></svg>
+      </button>
+      <button class="round-btn" id="btnMic" aria-label="Microphone" title="Microphone (M)">
+        <svg class="icon"><use href="#i-mic"></use></svg>
+      </button>
+      <button class="round-btn" id="btnHelp" aria-label="Help and shortcuts" title="Help (H)">
+        <svg class="icon"><use href="#i-help"></use></svg>
+      </button>
+    </div>
+    <div class="dock-progress" id="dockProgress" hidden><span id="dockProgressFill"></span></div>
+  </footer>
+
+  <div class="now-playing" id="nowPlaying" aria-live="polite">
+    <span class="npm-kicker" id="npmCategory">Dancer</span>
+    <span class="npm-title" id="npmTitle">Preset</span>
+    <span class="npm-sub" id="npmSub">MilkDrop · Cream of the Crop</span>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <div class="drop-overlay" id="dropOverlay" hidden>
+    <div class="drop-card">
+      <div class="drop-icon"><svg class="icon"><use href="#i-music"></use></svg></div>
+      <strong>Drop your audio here</strong>
+      <span>MP3 · WAV · OGG · FLAC · M4A &nbsp;—&nbsp; or a .milk / .milk2 preset</span>
+    </div>
+  </div>
+
+  <div class="boot" id="boot">
+    <div class="boot-bg"><span></span><span></span><span></span></div>
+    <div class="boot-content">
+      <div class="boot-logo">MILKDROP<span>3</span></div>
+      <div class="boot-tagline">WEB VISUALIZER</div>
+      <div class="boot-track"><i id="bootBar"></i></div>
+      <div class="boot-status" id="bootStatus">Loading engine…</div>
+      <div class="boot-error" id="bootError" hidden>
+        <p id="bootErrorText">The engine could not start.</p>
+        <button class="btn" onclick="location.reload()">Retry</button>
+      </div>
+      <div class="boot-legal">MilkDrop 3 · open-source project · projectM engine</div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.ogg,.flac,.m4a,.aac,.opus" hidden>
+  <input type="file" id="presetInput" accept=".milk,.milk2" hidden>
+
+  <!-- Preset library -->
+  <div class="modal-layer" id="browserLayer" hidden>
+    <div class="modal-panel browser-panel" role="dialog" aria-modal="true" aria-labelledby="browserTitle">
+      <header class="modal-head">
+        <div class="modal-title">
+          <p class="eyebrow">Library</p>
+          <h2 id="browserTitle">MilkDrop Presets</h2>
+        </div>
+        <label class="search-box">
+          <svg class="icon"><use href="#i-search"></use></svg>
+          <input type="search" id="presetSearch" placeholder="Search for a preset, artist, or style…" autocomplete="off" spellcheck="false">
+          <kbd>/</kbd>
+        </label>
+        <button class="icon-btn modal-close" data-close aria-label="Close">
+          <svg class="icon"><use href="#i-close"></use></svg>
+        </button>
+      </header>
+      <div class="browser-grid">
+        <aside class="browser-side">
+          <div class="side-label">Explore</div>
+          <div class="cat-list" id="categoryList">
+            <button class="cat-link active" data-cat="*"><span class="cat-ic"><svg class="icon"><use href="#i-grid"></use></svg></span><span>All presets</span><b id="countAll">—</b></button>
+            <button class="cat-link" data-cat="__favorites"><span class="cat-ic"><svg class="icon"><use href="#i-star"></use></svg></span><span>Favorites</span><b id="countFav">0</b></button>
+            <button class="cat-link" data-cat="__history"><span class="cat-ic"><svg class="icon"><use href="#i-history"></use></svg></span><span>History</span><b id="countHist">0</b></button>
+          </div>
+          <div class="side-label">Categories</div>
+          <div class="cat-list" id="categoryListExtra"></div>
+          <div class="side-footer">
+            <div><b>10,271</b> presets · MilkDrop 3 + Cream of the Crop</div>
+            <div>projectM <span id="engineVersionSide">4.x</span> · WebGL 2</div>
+            <button class="side-about" id="btnAbout">About & credits</button>
+          </div>
+        </aside>
+        <section class="browser-main">
+          <div class="featured-block" id="featuredBlock">
+            <div class="section-head"><h3>Featured picks</h3><span>visual selection</span></div>
+            <div class="featured-rail" id="featuredRail"></div>
+          </div>
+          <div class="list-head">
+            <div class="result-count" id="resultCount">Loading…</div>
+            <div class="list-tools">
+              <button class="chip-btn" id="btnOnlyFav"><svg class="icon"><use href="#i-star"></use></svg> Favorites</button>
+              <button class="chip-btn" id="btnShuffleList"><svg class="icon"><use href="#i-shuffle"></use></svg> Random</button>
+            </div>
+          </div>
+          <div class="preset-list" id="presetList">
+            <div class="preset-list-inner" id="presetListInner"></div>
+          </div>
+        </section>
+      </div>
+      <footer class="browser-foot">
+        <span id="browserHint">Click to load a preset · ★ to keep it</span>
+        <button class="btn primary" id="btnRandomBrowser"><svg class="icon"><use href="#i-sparkle"></use></svg> Surprise me</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="modal-layer" id="settingsLayer" hidden>
+    <div class="modal-panel settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <header class="modal-head">
+        <div class="modal-title"><p class="eyebrow">Customization</p><h2 id="settingsTitle">Settings</h2></div>
+        <button class="icon-btn modal-close" data-close aria-label="Close"><svg class="icon"><use href="#i-close"></use></svg></button>
+      </header>
+      <div class="settings-scroll">
+        <section class="setting-group">
+          <div class="group-head"><h3>Rendering</h3><p>Balance sharpness and smoothness.</p></div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Render resolution</h4><p>The canvas is scaled according to the selected quality.</p></div>
+            <div class="segmented" data-setting="quality">
+              <button data-value="auto">Auto</button>
+              <button data-value="performance">Performance</button>
+              <button data-value="balanced">Balanced</button>
+              <button data-value="quality">Sharp</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Warp mesh</h4><p>A finer mesh makes warping more precise.</p></div>
+            <div class="segmented" data-setting="mesh">
+              <button data-value="32x24">32 × 24</button>
+              <button data-value="48x36">48 × 36</button>
+              <button data-value="64x48">64 × 48</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Aspect correction</h4><p>Keeps preset proportions on wide screens.</p></div>
+            <button class="switch" role="switch" aria-checked="true" data-setting="aspect" aria-label="Aspect correction"><span></span></button>
+          </div>
+        </section>
+
+        <section class="setting-group">
+          <div class="group-head"><h3>Presets</h3><p>The heart of the show.</p></div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Auto shuffle</h4><p>Changes presets after a delay with a soft transition.</p></div>
+            <button class="switch" role="switch" aria-checked="true" data-setting="shuffle" aria-label="Auto shuffle"><span></span></button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Interval</h4><p>Display time before the next preset.</p></div>
+            <div class="segmented" data-setting="interval">
+              <button data-value="15">15 s</button>
+              <button data-value="30">30 s</button>
+              <button data-value="45">45 s</button>
+              <button data-value="60">60 s</button>
+              <button data-value="120">2 min</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Transition duration</h4><p>Crossfade between two presets.</p></div>
+            <div class="segmented" data-setting="transition">
+              <button data-value="1">1 s</button>
+              <button data-value="2.5">2.5 s</button>
+              <button data-value="4">4 s</button>
+              <button data-value="6">6 s</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Change on beat</h4><p>Cuts to a new preset on low-frequency hits.</p></div>
+            <button class="switch" role="switch" aria-checked="false" data-setting="beatcut" aria-label="Change on beat"><span></span></button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Beat sensitivity</h4><p>Detection sensitivity sent to the engine.</p></div>
+            <div class="range-wrap"><input type="range" min="0.5" max="2" step="0.1" value="1" data-setting="beatsens" aria-label="Beat sensitivity"><output>1.0</output></div>
+          </div>
+        </section>
+
+        <section class="setting-group">
+          <div class="group-head"><h3>Audio</h3><p>The sound that shapes the image.</p></div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Playback volume</h4><p>Controls demo and file audio (not the microphone).</p></div>
+            <div class="range-wrap"><svg class="icon"><use href="#i-volume"></use></svg><input type="range" min="0" max="1" step="0.01" value="0.8" data-setting="volume" aria-label="Volume"><output>80%</output></div>
+          </div>
+          <div class="setting-actions">
+            <button class="btn ghost" id="btnDemoFromSettings"><svg class="icon"><use href="#i-music"></use></svg> Launch sound demo</button>
+            <button class="btn ghost" id="btnFileFromSettings"><svg class="icon"><use href="#i-folder"></use></svg> Open a file</button>
+            <button class="btn ghost" id="btnMicFromSettings"><svg class="icon"><use href="#i-mic"></use></svg> Microphone</button>
+          </div>
+        </section>
+
+        <section class="setting-group">
+          <div class="group-head"><h3>Interface</h3><p>For total immersion.</p></div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Show FPS</h4><p>Frames-per-second counter.</p></div>
+            <button class="switch" role="switch" aria-checked="true" data-setting="showfps" aria-label="Show FPS"><span></span></button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-copy"><h4>Hide UI in fullscreen</h4><p>Controls fade out after a few seconds.</p></div>
+            <button class="switch" role="switch" aria-checked="true" data-setting="autohide" aria-label="Hide UI in fullscreen"><span></span></button>
+          </div>
+          <div class="setting-actions">
+            <button class="btn ghost" id="btnScreenshot"><svg class="icon"><use href="#i-camera"></use></svg> Capture an image</button>
+            <button class="btn danger" id="btnResetSettings">Reset settings</button>
+          </div>
+        </section>
+
+        <section class="about-strip">
+          <div><b>MilkDrop 3 Web</b><span>Browser port · HTML · CSS · JavaScript · WebGL 2</span></div>
+          <button class="btn ghost" id="btnAbout2"><svg class="icon"><use href="#i-about"></use></svg> Credits</button>
+        </section>
+      </div>
+      <footer class="settings-foot">
+        <span>Engine <b id="engineVersion">projectM</b> · MilkDrop 3 + Cream of the Crop</span>
+        <button class="btn" data-close>Done</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Help -->
+  <div class="modal-layer" id="helpLayer" hidden>
+    <div class="modal-panel help-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <header class="modal-head">
+        <div class="modal-title"><p class="eyebrow">Quick guide</p><h2 id="helpTitle">Shortcuts & gestures</h2></div>
+        <button class="icon-btn modal-close" data-close aria-label="Close"><svg class="icon"><use href="#i-close"></use></svg></button>
+      </header>
+      <div class="help-grid">
+        <section>
+          <h3><svg class="icon"><use href="#i-grid"></use></svg> Navigation</h3>
+          <dl>
+            <div><dt><kbd>Space</kbd></dt><dd>Next preset</dd></div>
+            <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Previous / next</dd></div>
+            <div><dt><kbd>R</kbd></dt><dd>Random preset</dd></div>
+            <div><dt><kbd>B</kbd></dt><dd>Open the library</dd></div>
+            <div><dt><kbd>S</kbd></dt><dd>Auto shuffle</dd></div>
+            <div><dt><kbd>L</kbd></dt><dd>Lock preset</dd></div>
+            <div><dt><kbd>F</kbd></dt><dd>Fullscreen</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h3><svg class="icon"><use href="#i-music"></use></svg> Audio</h3>
+          <dl>
+            <div><dt><kbd>O</kbd></dt><dd>Open an audio file</dd></div>
+            <div><dt><kbd>M</kbd></dt><dd>Toggle microphone</dd></div>
+            <div><dt><kbd>D</kbd></dt><dd>Launch sound demo</dd></div>
+            <div><dt><kbd>P</kbd></dt><dd>Play / pause</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h3><svg class="icon"><use href="#i-camera"></use></svg> Display</h3>
+          <dl>
+            <div><dt><kbd>C</kbd></dt><dd>Capture a PNG image</dd></div>
+            <div><dt><kbd>H</kbd></dt><dd>This help</dd></div>
+            <div><dt><kbd>Esc</kbd></dt><dd>Close / exit fullscreen</dd></div>
+            <div><dt><kbd>Double-click</kbd></dt><dd>Fullscreen on the canvas</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h3><svg class="icon"><use href="#i-sparkle"></use></svg> Gestures</h3>
+          <dl>
+            <div><dt>Drag & drop</dt><dd>Audio or .milk preset</dd></div>
+            <div><dt>Hover bottom</dt><dd>Reveal the dock</dd></div>
+            <div><dt>Mouse wheel</dt><dd>Adjust volume in the dock</dd></div>
+            <div><dt>Mobile</dt><dd>Swipe the canvas: next preset</dd></div>
+            <div><dt>2× DOUBLE badge</dt><dd>.milk2 double preset</dd></div>
+          </dl>
+        </section>
+      </div>
+      <footer class="help-foot">
+        <p>Tip: the <b>Space</b> bar is the most MilkDrop gesture there is. Press it often.</p>
+        <button class="btn" data-close>Got it</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- About -->
+  <div class="modal-layer" id="aboutLayer" hidden>
+    <div class="modal-panel about-panel" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+      <header class="modal-head">
+        <div class="modal-title"><p class="eyebrow">Credits</p><h2 id="aboutTitle">MilkDrop 3 · Web</h2></div>
+        <button class="icon-btn modal-close" data-close aria-label="Close"><svg class="icon"><use href="#i-close"></use></svg></button>
+      </header>
+      <div class="about-body">
+        <div class="about-logo">MILKDROP<span>3</span><small>WEB EDITION</small></div>
+        <p class="about-lead">A browser adaptation of <b>MilkDrop 3</b>, the legendary Winamp visualizer. The MilkDrop rendering engine — <code>.milk</code> presets, per-frame equations, warp &amp; comp shaders — runs in WebAssembly and draws with WebGL 2.</p>
+        <div class="credit-grid">
+          <div><span>Original visualizer</span><b>MilkDrop</b><p>Ryan Geiss · Nullsoft · 2001</p></div>
+          <div><span>Windows version</span><b>MilkDrop 3</b><p>MilkDrop2077 · BeatDrop</p></div>
+          <div><span>Web engine</span><b>projectM 4</b><p>libprojectM · LGPL 2.1 · WebAssembly</p></div>
+          <div><span>Presets</span><b>MilkDrop 3 + Cream of the Crop</b><p>10,271 presets · including 476 from MilkDrop 3</p></div>
+          <div><span>Web port</span><b>Ported by Antoine Santo aka N0NameN0</b><p><a href="https://github.com/N0NameN0" target="_blank" rel="noopener">github.com/N0NameN0</a></p></div>
+          <div><span>Textures</span><b>MilkDrop texture pack</b><p>Original MilkDrop + community textures</p></div>
+        </div>
+        <p class="about-note">MilkDrop 3 <code>.milk2</code> files are supported in experimental mode: two presets, two engines, one image blended in real time. Presets and textures are the work of the MilkDrop community. This adaptation would be nothing without decades of shared creations. Thank you to all authors.</p>
+        <div class="about-links">
+          <a href="https://github.com/milkdrop2077/MilkDrop3" target="_blank" rel="noopener">MilkDrop 3 on GitHub</a>
+          <a href="https://github.com/projectM-visualizer/projectm" target="_blank" rel="noopener">projectM</a>
+          <a href="https://github.com/projectM-visualizer/presets-cream-of-the-crop" target="_blank" rel="noopener">Cream of the Crop presets</a>
+          <a href="https://github.com/projectM-visualizer/presets-milkdrop-texture-pack" target="_blank" rel="noopener">Texture pack</a>
+          <a href="https://github.com/N0NameN0" target="_blank" rel="noopener">Antoine Santo on GitHub</a>
+        </div>
+        <div class="about-meta">
+          <span>Web version 1.0.0</span>
+          <span>HTML · CSS · JavaScript · WebGL 2 · WASM</span>
+          <span id="aboutEngine">projectM</span>
+        </div>
+      </div>
+      <footer class="help-foot"><p>A fan project, not affiliated with Nullsoft or Winamp.</p><button class="btn" data-close>Close</button></footer>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js?v=20261115"></script>
+</body>
+</html>

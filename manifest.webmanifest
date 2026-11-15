@@ -1,0 +1,25 @@
+{
+  "name": "MilkDrop 3 Web",
+  "short_name": "MilkDrop 3",
+  "description": "MilkDrop 3 audio visualizer for the browser, with 10,271 presets and a WebGL 2 / WebAssembly engine.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#04050a",
+  "theme_color": "#04050a",
+  "categories": [
+    "music",
+    "entertainment",
+    "graphics"
+  ],
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
