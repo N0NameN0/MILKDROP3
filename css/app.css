@@ -767,7 +767,7 @@ body.intro-active .hud,
 body.intro-active .now-playing,
 body.intro-active .toasts,
 body.intro-active .source-menu,
-body.intro-active .drop-overlay { opacity: 0 !important; pointer-events: none; }
+body.intro-active .drop-overlay { opacity: 0 !important; visibility: hidden !important; pointer-events: none; }
 .intro-top,
 .intro-foot {
   position: absolute;
